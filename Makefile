@@ -1,4 +1,4 @@
-.PHONY: build clean run generate
+.PHONY: build clean run
 
 build:
 	go build -o rsa .
@@ -10,6 +10,3 @@ clean:
 
 run: build
 	./rsa
-
-generate: build
-	./rsa generate .
