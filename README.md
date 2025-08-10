@@ -20,7 +20,7 @@ Or clone and build from source:
 ```shell
 git clone https://gitlab.com/tuanta02/rsa-tools.git
 cd rsa-tools
-go build -o rsa .
+go build -o rsa-tools .
 ```
 
 ## Usage
