@@ -115,11 +115,13 @@ func writePrivateKey(privateKey *rsa.PrivateKey, outputDirectory string) error {
 }
 
 func write(file *os.File, pemBlock *pem.Block) (err error) {
-	switch strings.ToLower(outputFormat) {
-	case "der":
+	switch strings.ToUpper(outputFormat) {
+	case config.KeyFormatDER:
 		_, err = file.Write(pemBlock.Bytes)
-	case "pem":
+	case config.KeyFormatPEM:
 		err = pem.Encode(file, pemBlock)
+	case config.KeyFormatJWK:
+		fallthrough
 	default:
 		return errors.New("unsupported output format")
 	}
