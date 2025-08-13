@@ -12,10 +12,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/tuanta02/rsa-tools/config"
+	"gitlab.com/tuanta02/rsa-tools/internal/config"
+	"gitlab.com/tuanta02/rsa-tools/internal/domain"
 )
-
-var keyFile string
 
 // convertCmd represents the convert command
 var convertCmd = &cobra.Command{
@@ -57,19 +56,6 @@ Example usage:
 		fmt.Println(string(result))
 		return nil
 	},
-}
-
-type RSAPublicJWK struct {
-	KeyType string `json:"kty"`
-	N       string `json:"n"`
-	E       string `json:"e"`
-}
-
-type RSAPrivateJWK struct {
-	RSAPublicJWK
-	D string `json:"d"`
-	P string `json:"p"`
-	Q string `json:"q"`
 }
 
 type KeyConverter interface {
@@ -127,8 +113,8 @@ func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &RSAPublicJWK{
-		KeyType: config.KeyTypePublicKey,
+	jwk := &domain.RSAPublicJWK{
+		KeyType: config.KeyTypeRSA,
 		N:       base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
 		E:       base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes()),
 	}
@@ -142,15 +128,18 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &RSAPrivateJWK{
-		RSAPublicJWK: RSAPublicJWK{
-			KeyType: config.KeyTypePrivateKey,
+	jwk := &domain.RSAPrivateJWK{
+		RSAPublicJWK: domain.RSAPublicJWK{
+			KeyType: config.KeyTypeRSA,
 			N:       base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()),
 			E:       base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.E)).Bytes()),
 		},
-		D: base64.RawURLEncoding.EncodeToString(privateKey.D.Bytes()),
-		P: base64.RawURLEncoding.EncodeToString(privateKey.Primes[0].Bytes()),
-		Q: base64.RawURLEncoding.EncodeToString(privateKey.Primes[1].Bytes()),
+		D:    base64.RawURLEncoding.EncodeToString(privateKey.D.Bytes()),
+		P:    base64.RawURLEncoding.EncodeToString(privateKey.Primes[0].Bytes()),
+		Q:    base64.RawURLEncoding.EncodeToString(privateKey.Primes[1].Bytes()),
+		Dp:   base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Dp.Bytes()),
+		Dq:   base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Dq.Bytes()),
+		QInv: base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Qinv.Bytes()),
 	}
 
 	return json.MarshalIndent(jwk, "", "\t")

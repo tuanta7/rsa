@@ -12,11 +12,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/tuanta02/rsa-tools/config"
+	"gitlab.com/tuanta02/rsa-tools/internal/config"
 )
-
-var bits int
-var outputFormat string
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{

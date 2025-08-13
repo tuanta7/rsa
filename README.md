@@ -54,7 +54,7 @@ rsa-tools convert --input public.der --output-format base64
 
 - Support PKCS#8 format
 - Add key validation commands
-- Implement key encryption/decryption
+- Implement RSA encryption/decryption
 
 ## Cobra Debug Tutorial
 
