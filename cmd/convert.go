@@ -4,8 +4,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -88,25 +86,6 @@ func (c JWKConverter) Convert(data []byte) ([]byte, error) {
 	}
 }
 
-func parseKey(contents []byte) (keyType string, keyBody []byte, err error) {
-	block, _ := pem.Decode(contents)
-	if block != nil {
-		return block.Type, block.Bytes, nil
-	}
-
-	publicKey, _ := x509.ParsePKCS1PublicKey(contents)
-	if publicKey != nil {
-		return config.KeyTypePublicKey, contents, nil
-	}
-
-	privateKey, _ := x509.ParsePKCS1PrivateKey(contents)
-	if privateKey != nil {
-		return config.KeyTypePrivateKey, contents, nil
-	}
-
-	return "", nil, errors.New("unsupported key format")
-}
-
 func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
 	publicKey, err := x509.ParsePKCS1PublicKey(keyBody)
 	if err != nil {
@@ -114,9 +93,9 @@ func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
 	}
 
 	jwk := &domain.RSAPublicJWK{
-		KeyType: config.KeyTypeRSA,
-		N:       base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
-		E:       base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes()),
+		KeyType:        config.KeyTypeRSA,
+		Modulus:        jwkEncode(publicKey.N),
+		PublicExponent: jwkEncode(big.NewInt(int64(publicKey.E))),
 	}
 
 	return json.MarshalIndent(jwk, "", "\t")
@@ -130,16 +109,16 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 
 	jwk := &domain.RSAPrivateJWK{
 		RSAPublicJWK: domain.RSAPublicJWK{
-			KeyType: config.KeyTypeRSA,
-			N:       base64.RawURLEncoding.EncodeToString(privateKey.N.Bytes()),
-			E:       base64.RawURLEncoding.EncodeToString(big.NewInt(int64(privateKey.E)).Bytes()),
+			KeyType:        config.KeyTypeRSA,
+			Modulus:        jwkEncode(privateKey.N),
+			PublicExponent: jwkEncode(big.NewInt(int64(privateKey.E))),
 		},
-		D:    base64.RawURLEncoding.EncodeToString(privateKey.D.Bytes()),
-		P:    base64.RawURLEncoding.EncodeToString(privateKey.Primes[0].Bytes()),
-		Q:    base64.RawURLEncoding.EncodeToString(privateKey.Primes[1].Bytes()),
-		Dp:   base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Dp.Bytes()),
-		Dq:   base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Dq.Bytes()),
-		QInv: base64.RawURLEncoding.EncodeToString(privateKey.Precomputed.Qinv.Bytes()),
+		PrivateExponent: jwkEncode(privateKey.D),
+		P:               jwkEncode(privateKey.Primes[0]),
+		Q:               jwkEncode(privateKey.Primes[1]),
+		Dp:              jwkEncode(privateKey.Precomputed.Dp),
+		Dq:              jwkEncode(privateKey.Precomputed.Dq),
+		QInv:            jwkEncode(privateKey.Precomputed.Qinv),
 	}
 
 	return json.MarshalIndent(jwk, "", "\t")
@@ -148,6 +127,6 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 func init() {
 	rootCmd.AddCommand(convertCmd)
 
-	convertCmd.Flags().StringVar(&keyFile, "key-file", "", "Key to convert")
-	convertCmd.Flags().StringVar(&outputFormat, "output-format", "", "Key format to convert to")
+	convertCmd.Flags().StringVarP(&keyFile, "key-file", "k", "", "Key to convert")
+	convertCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "", "Key format to convert to")
 }

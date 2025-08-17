@@ -130,5 +130,5 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 
 	generateCmd.Flags().IntVarP(&bits, "bits", "b", 2048, "RSA key size (e.g., 2048, 4096)")
-	generateCmd.Flags().StringVar(&outputFormat, "output-format", "pem", "Output format (pem, der)")
+	generateCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "pem", "Output format (pem, der)")
 }
