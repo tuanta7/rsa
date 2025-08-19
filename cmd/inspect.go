@@ -12,13 +12,27 @@ import (
 // inspectCmd represents the inspect command
 var inspectCmd = &cobra.Command{
 	Use:   "inspect",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Inspect and display RSA key information",
+	Long: `Analyze RSA key files and display detailed information about the key.
+	
+This command supports various RSA key formats including:
+- PEM encoded PKCS#1 keys
+- DER formatted keys
+- JWK (JSON Web Key) format
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+For public keys, it displays:
+- Key type and size
+- Public exponent
+- Modulus
+
+For private keys, it additionally displays:
+- Prime factors (p and q)
+- CRT (Chinese Remainder Theorem) values
+- Additional private key parameters
+
+Example:
+  rsa-tools inspect private.pem
+  rsa-tools inspect public_key.der`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return fmt.Errorf("missing key file path")
@@ -59,7 +73,7 @@ func inspectPublicKey(keyBody []byte) error {
 
 	fmt.Printf("Key Type: %s\n", config.KeyTypePublicKey)
 	fmt.Printf("Key Size: %d bits\n", publicKey.Size()*8)
-	fmt.Printf("Public Exponent: %d\n", publicKey.E)
+	fmt.Printf("Public Exponent (e): %d\n", publicKey.E)
 	fmt.Printf("Modulus (n): %s\n", publicKey.N)
 
 	return nil
@@ -73,7 +87,8 @@ func inspectPrivateKey(keyBody []byte) error {
 
 	fmt.Printf("Key Type: %s\n", config.KeyTypePrivateKey)
 	fmt.Printf("Key Size: %d bits (%d bytes)\n", privateKey.Size()*8, privateKey.Size())
-	fmt.Printf("Public Exponent: %d\n", privateKey.E)
+	fmt.Printf("Public Exponent (e): %d\n", privateKey.E)
+	fmt.Printf("Private Exponent (d): %d\n", privateKey.D)
 	fmt.Printf("Modulus (n): %s (%d bits)\n", privateKey.N, privateKey.N.BitLen())
 	fmt.Println("")
 	fmt.Printf("Primes: p x q = n\n")
@@ -81,9 +96,9 @@ func inspectPrivateKey(keyBody []byte) error {
 	fmt.Printf("n (%d bits): %s\n", privateKey.Primes[1].BitLen(), privateKey.Primes[1])
 	fmt.Println("")
 	fmt.Printf("CRT Values\n")
-	fmt.Printf("dp = d mod (p-1): %s", privateKey.Precomputed.Dp)
-	fmt.Printf("dq = d mod (q-1): %s", privateKey.Precomputed.Dq)
-	fmt.Printf("qi = q ^ -1 mod p: %s", privateKey.Precomputed.Qinv)
+	fmt.Printf("dp = d mod (p-1): %s\n", privateKey.Precomputed.Dp)
+	fmt.Printf("dq = d mod (q-1): %s\n", privateKey.Precomputed.Dq)
+	fmt.Printf("qi = q ^ -1 mod p: %s\n", privateKey.Precomputed.Qinv)
 
 	return nil
 }

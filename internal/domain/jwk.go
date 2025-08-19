@@ -9,8 +9,8 @@ type RSAPublicJWK struct {
 type RSAPrivateJWK struct {
 	RSAPublicJWK
 	PrivateExponent string `json:"d"`
-	P               string `json:"p"`
-	Q               string `json:"q"`
+	Prime0          string `json:"p"`
+	Prime1          string `json:"q"`
 	Dp              string `json:"dp"`
 	Dq              string `json:"dq"`
 	QInv            string `json:"qi"`

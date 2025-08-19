@@ -9,16 +9,22 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "rsa-tools",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-	examples and usage of using your application. For example:
-	
-	Cobra is a CLI library for Go that empowers applications.
-	This application is a tool to generate the needed files
-	to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A CLI tool for RSA key management, encryption, decryption, signing, and verification.",
+	Long: `rsa-tools is a command-line utility for working with RSA cryptography. 
+It provides commands to generate, inspect, convert, encrypt, decrypt, sign, and verify RSA keys and data.
+
+Features:
+- Generate RSA key pairs
+- Inspect and convert key formats (PEM, JWK, etc.)
+- Encrypt and decrypt files or messages
+- Sign and verify data
+
+Examples:
+  rsa-tools generate --bits 2048 .
+  rsa-tools encrypt --in plaintext.txt --out ciphertext.bin
+  rsa-tools sign --key private.pem --in data.txt --out signature.bin
+
+Use "rsa-tools [command] --help" for more information about a command.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
