@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/tuanta02/rsa-tools/internal/config"
-	"gitlab.com/tuanta02/rsa-tools/internal/domain"
+	"github.com/tuanta7/rsa-tools/internal/config"
+	"github.com/tuanta7/rsa-tools/internal/domain"
 )
 
 // convertCmd represents the convert command

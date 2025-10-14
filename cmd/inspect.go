@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/tuanta02/rsa-tools/internal/config"
+	"github.com/tuanta7/rsa-tools/internal/config"
 )
 
 // inspectCmd represents the inspect command

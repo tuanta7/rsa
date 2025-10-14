@@ -1,4 +1,4 @@
-module gitlab.com/tuanta02/rsa-tools
+module github.com/tuanta7/rsa-tools
 
 go 1.24.5
 

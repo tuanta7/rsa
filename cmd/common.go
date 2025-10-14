@@ -7,7 +7,7 @@ import (
 	"errors"
 	"math/big"
 
-	"gitlab.com/tuanta02/rsa-tools/internal/config"
+	"github.com/tuanta7/rsa-tools/internal/config"
 )
 
 var (

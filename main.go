@@ -1,6 +1,6 @@
 package main
 
-import "gitlab.com/tuanta02/rsa-tools/cmd"
+import "github.com/tuanta7/rsa-tools/cmd"
 
 func main() {
 	cmd.Execute()

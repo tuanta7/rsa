@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/tuanta02/rsa-tools/internal/config"
+	"github.com/tuanta7/rsa-tools/internal/config"
 )
 
 // generateCmd represents the generate command
