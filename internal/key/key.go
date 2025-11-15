@@ -1,9 +1,7 @@
 package key
 
 import (
-	"bytes"
 	"crypto/rsa"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 
@@ -25,8 +23,6 @@ func (k Key) MarshalJSON() (b []byte, err error) {
 		jwk, err = rsaPublicKeyToJWK(t)
 	case *rsa.PrivateKey:
 		jwk, err = rsaPrivateKeyToJWK(t)
-	case []byte:
-		jwk, err = symmetricKeyToJWK(t)
 	default:
 		return nil, errors.New("unsupported key type")
 	}
@@ -42,37 +38,30 @@ func (k Key) MarshalJSON() (b []byte, err error) {
 	return json.Marshal(jwk)
 }
 
-func rsaPublicKeyToJWK(publicKey *rsa.PublicKey) (*JSONWebKey, error) {
-	return &JSONWebKey{
-		KeyType:        config.KeyTypeRSA,
-		Modulus:        publicKey.N.Bytes(),
-		PublicExponent: bigEndianFromInt(publicKey.E),
-	}, nil
-}
+func (k *Key) UnmarshalJSON(b []byte) error {
+	var jwk JSONWebKey
+	err := json.Unmarshal(b, &jwk)
+	if err != nil {
+		return err
+	}
 
-func rsaPrivateKeyToJWK(publicKey *rsa.PrivateKey) (*JSONWebKey, error) {
-	return &JSONWebKey{
-		KeyType:         config.KeyTypeRSA,
-		Modulus:         publicKey.N.Bytes(),
-		PublicExponent:  bigEndianFromInt(publicKey.E),
-		PrivateExponent: publicKey.D.Bytes(),
-		Prime0:          publicKey.Primes[0].Bytes(),
-		Prime1:          publicKey.Primes[1].Bytes(),
-		Dp:              publicKey.Precomputed.Dp.Bytes(),
-		Dq:              publicKey.Precomputed.Dq.Bytes(),
-		Qi:              publicKey.Precomputed.Qinv.Bytes(),
-	}, nil
-}
+	var key any
 
-func symmetricKeyToJWK(key []byte) (*JSONWebKey, error) {
-	return &JSONWebKey{
-		KeyType:      config.KeyTypeSymmetric,
-		SymmetricKey: key,
-	}, nil
-}
+	switch jwk.KeyType {
+	case config.KeyTypeRSA:
+		if jwk.PrivateExponent != nil {
+			key, err = jwk.RSAPrivateKey()
+		} else {
+			key, err = jwk.RSAPublicKey()
+		}
+	default:
+		return errors.New("unsupported key type")
+	}
 
-func bigEndianFromInt(i int) bigEndian {
-	data := make([]byte, 8)
-	binary.BigEndian.PutUint64(data, uint64(i))
-	return bytes.TrimLeft(data, "\x00")
+	k.Value = key
+	k.Algorithm = jwk.Algorithm
+	k.KeyID = jwk.KeyID
+	k.Use = jwk.Use
+
+	return nil
 }

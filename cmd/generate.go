@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuanta7/keys/internal/config"
+	"github.com/tuanta7/keys/internal/key"
 )
 
 // generateCmd represents the generate command
@@ -74,18 +75,33 @@ func writePublicKey(publicKey *rsa.PublicKey, outputDirectory string) error {
 	}
 	defer file.Close()
 
-	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
-	publicKeyPEM := &pem.Block{
-		Type:  config.KeyTypeRSAPublicKey,
-		Bytes: publicKeyBytes,
+	switch strings.ToUpper(outputFormat) {
+	case config.KeyFormatDER:
+		publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
+		_, err = file.Write(publicKeyBytes)
+	case config.KeyFormatPEM:
+		publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
+		publicKeyPEM := &pem.Block{
+			Type:  config.KeyTypeRSAPublicKey,
+			Bytes: publicKeyBytes,
+		}
+		err = pem.Encode(file, publicKeyPEM)
+	case config.KeyFormatJWK:
+		k := key.Key{
+			Value: publicKey,
+		}
+
+		keyJSON, marshalErr := json.MarshalIndent(k, "", "\t")
+		if marshalErr != nil {
+			return marshalErr
+		}
+
+		_, err = file.Write(keyJSON)
+	default:
+		return fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
 
-	err = write(file, publicKeyPEM)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func writePrivateKey(privateKey *rsa.PrivateKey, outputDirectory string) error {
@@ -97,30 +113,30 @@ func writePrivateKey(privateKey *rsa.PrivateKey, outputDirectory string) error {
 	}
 	defer file.Close()
 
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateKeyPEM := &pem.Block{
-		Type:  config.KeyTypeRSAPrivateKey,
-		Bytes: privateKeyBytes,
-	}
-
-	err = write(file, privateKeyPEM)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func write(file *os.File, pemBlock *pem.Block) (err error) {
 	switch strings.ToUpper(outputFormat) {
 	case config.KeyFormatDER:
-		_, err = file.Write(pemBlock.Bytes)
+		privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+		_, err = file.Write(privateKeyBytes)
 	case config.KeyFormatPEM:
-		err = pem.Encode(file, pemBlock)
+		privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+		privateKeyPEM := &pem.Block{
+			Type:  config.KeyTypeRSAPrivateKey,
+			Bytes: privateKeyBytes,
+		}
+		err = pem.Encode(file, privateKeyPEM)
 	case config.KeyFormatJWK:
-		fallthrough
+		k := key.Key{
+			Value: privateKey,
+		}
+
+		keyJSON, marshalErr := json.MarshalIndent(k, "", "\t")
+		if marshalErr != nil {
+			return marshalErr
+		}
+
+		_, err = file.Write(keyJSON)
 	default:
-		return errors.New("unsupported output format")
+		return fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
 
 	return err
@@ -130,5 +146,5 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 
 	generateCmd.Flags().IntVarP(&bits, "bits", "b", 2048, "RSA key size (e.g., 2048, 4096)")
-	generateCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "pem", "Output format (pem, der)")
+	generateCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "pem", "Output format: pem, der, jwk")
 }

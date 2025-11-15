@@ -5,12 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/big"
+
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tuanta7/keys/bigint"
+
 	"github.com/tuanta7/keys/internal/config"
 	"github.com/tuanta7/keys/internal/key"
 )
@@ -93,13 +93,11 @@ func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &key.JSONWebKey{
-		KeyType:        config.KeyTypeRSA,
-		Modulus:        bigint.EncodeToString(publicKey.N),
-		PublicExponent: bigint.EncodeToString(big.NewInt(int64(publicKey.E))),
+	k := key.Key{
+		Value: publicKey,
 	}
 
-	return json.MarshalIndent(jwk, "", "\t")
+	return json.MarshalIndent(k, "", "\t")
 }
 
 func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
@@ -108,19 +106,11 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &key.JSONWebKey{
-		KeyType:         config.KeyTypeRSA,
-		Modulus:         bigint.EncodeToString(privateKey.N),
-		PublicExponent:  bigint.EncodeToString(big.NewInt(int64(privateKey.E))),
-		PrivateExponent: bigint.EncodeToString(privateKey.D),
-		Prime0:          bigint.EncodeToString(privateKey.Primes[0]),
-		Prime1:          bigint.EncodeToString(privateKey.Primes[1]),
-		Dp:              bigint.EncodeToString(privateKey.Precomputed.Dp),
-		Dq:              bigint.EncodeToString(privateKey.Precomputed.Dq),
-		Qi:              bigint.EncodeToString(privateKey.Precomputed.Qinv),
+	k := key.Key{
+		Value: privateKey,
 	}
 
-	return json.MarshalIndent(jwk, "", "\t")
+	return json.MarshalIndent(k, "", "\t")
 }
 
 func init() {
