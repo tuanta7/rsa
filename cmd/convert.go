@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
-
 	"os"
 	"strings"
 
@@ -15,107 +14,81 @@ import (
 	"github.com/tuanta7/keys/internal/key"
 )
 
-// convertCmd represents the convert command
 var convertCmd = &cobra.Command{
 	Use:   "convert",
 	Short: "Convert RSA key in PEM or DER format to different formats",
-	Long: `Convert an existing RSA key file to a different format.
+	Long: `Convert an existing RSA key file to another format.
 
 Supported output formats:
-- jwk: JSON Web Value format
-- base64: Base64 encoded format (URL encoded, no padding)
+\- jwk
+\- pem
+\- der
 
-The command will read the key file and output the converted format.
-
-Example usage:
+Example:
   rsa convert --key-file id_rsa --output-format jwk
-  rsa convert --key-file id_rsa.pub --output-format base64
+  rsa convert --key-file id_rsa.pub --output-format pem
   rsa convert --key-file id_rsa.pub --output-format jwk > id_rsa.pub.json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		contents, err := os.ReadFile(keyFile)
+		if keyFile == "" {
+			return errors.New("missing --key-file")
+		}
+
+		if outputFormat == "" {
+			outputFormat = "jwk"
+		}
+
+		data, err := os.ReadFile(keyFile)
 		if err != nil {
-			return err
+			return fmt.Errorf("read key file: %w", err)
 		}
 
-		var converter KeyConverter
-		switch strings.ToLower(outputFormat) {
-		case "jwk":
-			converter = JWKConverter{}
-		case "base64":
-			converter = Base64Converter{}
-		default:
-			return fmt.Errorf("unsupported output format: %s", outputFormat)
-		}
-
-		result, err := converter.Convert(contents)
+		parsed, err := parseKey(data)
 		if err != nil {
-			return err
+			return fmt.Errorf("parse key: %w", err)
 		}
 
-		fmt.Println(string(result))
+		out, err := marshalKey(parsed, strings.ToLower(outputFormat))
+		if err != nil {
+			return fmt.Errorf("marshal key: %w", err)
+		}
+
+		fmt.Println(string(out))
 		return nil
 	},
 }
 
-type KeyConverter interface {
-	Convert(data []byte) ([]byte, error)
-}
-
-type Base64Converter struct{}
-
-func (c Base64Converter) Convert(data []byte) ([]byte, error) {
-	base64Bytes := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
-	base64.StdEncoding.Encode(base64Bytes, data)
-	return base64Bytes, nil
-}
-
-type JWKConverter struct{}
-
-func (c JWKConverter) Convert(data []byte) ([]byte, error) {
-	keyType, keyBody, err := parseKey(data)
-	if err != nil {
-		return nil, err
-	}
-
-	switch keyType {
-	case config.KeyTypeRSAPrivateKey:
-		return convertPrivateKeyToJWK(keyBody)
-	case config.KeyTypeRSAPublicKey:
-		return convertPublicKeyToJWK(keyBody)
+func marshalKey(p *ParsedKey, format string) ([]byte, error) {
+	switch format {
+	case "der":
+		return p.PKCS1, nil
+	case "pem":
+		return marshalPEM(p), nil
+	case "jwk":
+		return marshalJWK(p)
 	default:
-		return nil, fmt.Errorf("unsupported block type: %s", keyType)
+		return nil, fmt.Errorf("unsupported output format: %s", format)
 	}
 }
 
-func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
-	publicKey, err := x509.ParsePKCS1PublicKey(keyBody)
-	if err != nil {
-		return nil, err
+func marshalPEM(p *ParsedKey) []byte {
+	var block *pem.Block
+	if p.Kind == config.KeyTypeRSAPrivateKey {
+		block = &pem.Block{Type: config.KeyTypeRSAPrivateKey, Bytes: p.PKCS1}
+	} else {
+		block = &pem.Block{Type: config.KeyTypeRSAPublicKey, Bytes: p.PKCS1}
 	}
-
-	k := key.Key{
-		Value: publicKey,
-	}
-
-	return json.MarshalIndent(k, "", "\t")
+	return pem.EncodeToMemory(block)
 }
 
-func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
-	privateKey, err := x509.ParsePKCS1PrivateKey(keyBody)
-	if err != nil {
-		return nil, err
+func marshalJWK(p *ParsedKey) ([]byte, error) {
+	if p.Kind == config.KeyTypeRSAPrivateKey {
+		return json.MarshalIndent(key.Key{Value: p.Private}, "", "\t")
 	}
-
-	k := key.Key{
-		Value: privateKey,
-	}
-
-	return json.MarshalIndent(k, "", "\t")
+	return json.MarshalIndent(key.Key{Value: p.Public}, "", "\t")
 }
 
 func init() {
 	rootCmd.AddCommand(convertCmd)
-
-	convertCmd.Flags().StringVarP(&keyFile, "key-file", "k", "", "Value to convert")
-	convertCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "", "Value format to convert to")
+	convertCmd.Flags().StringVarP(&keyFile, "key-file", "k", "", "Key file to convert")
+	convertCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "", "Target format: pem, der, jwk")
 }

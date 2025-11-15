@@ -34,7 +34,7 @@ Supported Formats
 
 ```shell
 # Generate a 2048-bit RSA key pair
-rsa generate --bits 2048 --output-dir ./keys
+rsa generate --bits 2048 ./keys
 ```
 
 ### Convert RSA Keys
@@ -43,10 +43,10 @@ Convert between different key formats:
 
 ```shell
 # Convert PEM to JWK
-rsa convert --input private.pem --output-format jwk
+rsa convert --output-format jwk --key-file private.pem
 
-# Convert DER to Base64
-rsa convert --input public.der --output-format base64
+# Convert DER to PEM
+rsa convert --output-format pem --input public.der
 ```
 
 ## TODO

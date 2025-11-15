@@ -1,11 +1,7 @@
 package config
 
 const (
-	KeyTypeRSA       = "RSA"
-	KeyTypeEC        = "EC"  // Elliptic Curve
-	KeyTypeOKP       = "OKP" // Octet Value Pair
-	KeyTypeSymmetric = "oct" // Octet Sequence
-
+	KeyTypeRSA           = "RSA"
 	KeyTypeRSAPublicKey  = "RSA PUBLIC KEY"
 	KeyTypeRSAPrivateKey = "RSA PRIVATE KEY"
 

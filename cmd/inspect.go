@@ -52,15 +52,18 @@ Example:
 			return err
 		}
 
-		keyType, keyBody, err := parseKey(contents)
+		parsedKey, err := parseKey(contents)
+		if err != nil {
+			return err
+		}
 
-		switch keyType {
+		switch parsedKey.Kind {
 		case config.KeyTypeRSAPrivateKey:
-			return inspectPrivateKey(keyBody)
+			return inspectPrivateKey(parsedKey.PKCS1)
 		case config.KeyTypeRSAPublicKey:
-			return inspectPublicKey(keyBody)
+			return inspectPublicKey(parsedKey.PKCS1)
 		default:
-			return fmt.Errorf("unsupported block type: %s", keyType)
+			return fmt.Errorf("unsupported block type: %s", parsedKey.Kind)
 		}
 	},
 }
