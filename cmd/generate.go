@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tuanta7/rsa-tools/internal/config"
+	"github.com/tuanta7/keys/internal/config"
 )
 
 // generateCmd represents the generate command
@@ -76,7 +76,7 @@ func writePublicKey(publicKey *rsa.PublicKey, outputDirectory string) error {
 
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
 	publicKeyPEM := &pem.Block{
-		Type:  config.KeyTypePublicKey,
+		Type:  config.KeyTypeRSAPublicKey,
 		Bytes: publicKeyBytes,
 	}
 
@@ -99,7 +99,7 @@ func writePrivateKey(privateKey *rsa.PrivateKey, outputDirectory string) error {
 
 	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	privateKeyPEM := &pem.Block{
-		Type:  config.KeyTypePrivateKey,
+		Type:  config.KeyTypeRSAPrivateKey,
 		Bytes: privateKeyBytes,
 	}
 

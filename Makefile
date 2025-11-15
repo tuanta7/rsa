@@ -1,7 +1,7 @@
 .PHONY: build clean run generate
 
 build:
-	go build -o rsa-tools .
+	go build -o keys .
 
 clean:
 	rm ./rsa
@@ -9,7 +9,7 @@ clean:
 	rm ./id_rsa.pub
 
 run: build
-	./rsa-tools
+	./keys
 
 generate: build
-	./rsa-tools generate --output-format der .
+	./keys generate --output-format der .

@@ -10,8 +10,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tuanta7/rsa-tools/internal/config"
-	"github.com/tuanta7/rsa-tools/internal/domain"
+	"github.com/tuanta7/keys/bigint"
+	"github.com/tuanta7/keys/internal/config"
+	"github.com/tuanta7/keys/internal/key"
 )
 
 // convertCmd represents the convert command
@@ -21,7 +22,7 @@ var convertCmd = &cobra.Command{
 	Long: `Convert an existing RSA key file to a different format.
 
 Supported output formats:
-- jwk: JSON Web Key format
+- jwk: JSON Web Value format
 - base64: Base64 encoded format (URL encoded, no padding)
 
 The command will read the key file and output the converted format.
@@ -77,9 +78,9 @@ func (c JWKConverter) Convert(data []byte) ([]byte, error) {
 	}
 
 	switch keyType {
-	case config.KeyTypePrivateKey:
+	case config.KeyTypeRSAPrivateKey:
 		return convertPrivateKeyToJWK(keyBody)
-	case config.KeyTypePublicKey:
+	case config.KeyTypeRSAPublicKey:
 		return convertPublicKeyToJWK(keyBody)
 	default:
 		return nil, fmt.Errorf("unsupported block type: %s", keyType)
@@ -92,10 +93,10 @@ func convertPublicKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &domain.RSAPublicJWK{
+	jwk := &key.JSONWebKey{
 		KeyType:        config.KeyTypeRSA,
-		Modulus:        jwkEncode(publicKey.N),
-		PublicExponent: jwkEncode(big.NewInt(int64(publicKey.E))),
+		Modulus:        bigint.EncodeToString(publicKey.N),
+		PublicExponent: bigint.EncodeToString(big.NewInt(int64(publicKey.E))),
 	}
 
 	return json.MarshalIndent(jwk, "", "\t")
@@ -107,18 +108,16 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	jwk := &domain.RSAPrivateJWK{
-		RSAPublicJWK: domain.RSAPublicJWK{
-			KeyType:        config.KeyTypeRSA,
-			Modulus:        jwkEncode(privateKey.N),
-			PublicExponent: jwkEncode(big.NewInt(int64(privateKey.E))),
-		},
-		PrivateExponent: jwkEncode(privateKey.D),
-		Prime0:          jwkEncode(privateKey.Primes[0]),
-		Prime1:          jwkEncode(privateKey.Primes[1]),
-		Dp:              jwkEncode(privateKey.Precomputed.Dp),
-		Dq:              jwkEncode(privateKey.Precomputed.Dq),
-		QInv:            jwkEncode(privateKey.Precomputed.Qinv),
+	jwk := &key.JSONWebKey{
+		KeyType:         config.KeyTypeRSA,
+		Modulus:         bigint.EncodeToString(privateKey.N),
+		PublicExponent:  bigint.EncodeToString(big.NewInt(int64(privateKey.E))),
+		PrivateExponent: bigint.EncodeToString(privateKey.D),
+		Prime0:          bigint.EncodeToString(privateKey.Primes[0]),
+		Prime1:          bigint.EncodeToString(privateKey.Primes[1]),
+		Dp:              bigint.EncodeToString(privateKey.Precomputed.Dp),
+		Dq:              bigint.EncodeToString(privateKey.Precomputed.Dq),
+		Qi:              bigint.EncodeToString(privateKey.Precomputed.Qinv),
 	}
 
 	return json.MarshalIndent(jwk, "", "\t")
@@ -127,6 +126,6 @@ func convertPrivateKeyToJWK(keyBody []byte) ([]byte, error) {
 func init() {
 	rootCmd.AddCommand(convertCmd)
 
-	convertCmd.Flags().StringVarP(&keyFile, "key-file", "k", "", "Key to convert")
-	convertCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "", "Key format to convert to")
+	convertCmd.Flags().StringVarP(&keyFile, "key-file", "k", "", "Value to convert")
+	convertCmd.Flags().StringVarP(&outputFormat, "output-format", "f", "", "Value format to convert to")
 }

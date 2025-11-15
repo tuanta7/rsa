@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tuanta7/rsa-tools/internal/config"
+	"github.com/tuanta7/keys/internal/config"
 )
 
 // inspectCmd represents the inspect command
@@ -18,10 +18,10 @@ var inspectCmd = &cobra.Command{
 This command supports various RSA key formats including:
 - PEM encoded PKCS#1 keys
 - DER formatted keys
-- JWK (JSON Web Key) format
+- JWK (JSON Web Value) format
 
 For public keys, it displays:
-- Key type and size
+- Value type and size
 - Public exponent
 - Modulus
 
@@ -55,9 +55,9 @@ Example:
 		keyType, keyBody, err := parseKey(contents)
 
 		switch keyType {
-		case config.KeyTypePrivateKey:
+		case config.KeyTypeRSAPrivateKey:
 			return inspectPrivateKey(keyBody)
-		case config.KeyTypePublicKey:
+		case config.KeyTypeRSAPublicKey:
 			return inspectPublicKey(keyBody)
 		default:
 			return fmt.Errorf("unsupported block type: %s", keyType)
@@ -71,8 +71,8 @@ func inspectPublicKey(keyBody []byte) error {
 		return err
 	}
 
-	fmt.Printf("Key Type: %s\n", config.KeyTypePublicKey)
-	fmt.Printf("Key Size: %d bits\n", publicKey.Size()*8)
+	fmt.Printf("Value Type: %s\n", config.KeyTypeRSAPublicKey)
+	fmt.Printf("Value Size: %d bits\n", publicKey.Size()*8)
 	fmt.Printf("Public Exponent (e): %d\n", publicKey.E)
 	fmt.Printf("Modulus (n): %s\n", publicKey.N)
 
@@ -85,8 +85,8 @@ func inspectPrivateKey(keyBody []byte) error {
 		return err
 	}
 
-	fmt.Printf("Key Type: %s\n", config.KeyTypePrivateKey)
-	fmt.Printf("Key Size: %d bits (%d bytes)\n", privateKey.Size()*8, privateKey.Size())
+	fmt.Printf("Value Type: %s\n", config.KeyTypeRSAPrivateKey)
+	fmt.Printf("Value Size: %d bits (%d bytes)\n", privateKey.Size()*8, privateKey.Size())
 	fmt.Printf("Public Exponent (e): %d\n", privateKey.E)
 	fmt.Printf("Private Exponent (d): %d\n", privateKey.D)
 	fmt.Printf("Modulus (n): %s (%d bits)\n", privateKey.N, privateKey.N.BitLen())
