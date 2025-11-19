@@ -81,7 +81,7 @@ func (g *RSAKeyGenerator) marshalPublicKey(publicKey *rsa.PublicKey) ([]byte, er
 func (g *RSAKeyGenerator) fileName(def string) string {
 	switch g.Format {
 	case config.KeyFormatPEM:
-		return def + ".pem"
+		return def
 	case config.KeyFormatDER:
 		return def + ".der"
 	case config.KeyFormatJWK:
